@@ -1,13 +1,23 @@
 #!/bin/bash
 
-# 下载并安装Cloudreve
+# 询问用户是否继续安装
+read -p "该脚本将安装Cloudreve并配置SSL证书和Nginx反向代理。是否继续？(y/n)" choice
+case "$choice" in 
+  y|Y ) echo "继续安装..." ;;
+  n|N ) echo "取消安装。" && exit 1;;
+  * ) echo "无效输入。" && exit 1;;
+esac
+
+# 下载并运行Cloudreve安装脚本
+echo "正在下载并安装Cloudreve..."
 wget https://github.com/cloudreve/Cloudreve/releases/download/3.7.1/cloudreve_3.7.1_linux_amd64.tar.gz
 sudo dpkg -i cloudreve_3.7.1_linux_amd64.tar.gz
 tar -zxvf cloudreve_3.7.1_linux_amd64.tar.gz
 chmod +x ./cloudreve
 ./cloudreve
 
-# 设置Cloudreve为系统服务
+# 配置Cloudreve为系统服务
+echo "配置Cloudreve为系统服务..."
 cat > /usr/lib/systemd/system/cloudreve.service <<EOF 
 [Unit]
 Description=Cloudreve  
@@ -35,10 +45,12 @@ sudo systemctl start cloudreve
 sudo systemctl enable cloudreve
 
 # 安装SSL证书 
+echo "安装SSL证书..."
 sudo apt install certbot python3-certbot-nginx
 sudo certbot --nginx -d cloud.520105.xyz
 
 # 配置nginx反向代理
+echo "配置Nginx反向代理..."
 cat > /etc/nginx/sites-available/cloudreve <<EOF
 server {
     listen 80;
@@ -68,3 +80,6 @@ EOF
 
 ln -s /etc/nginx/sites-available/cloudreve /etc/nginx/sites-enabled/ 
 systemctl restart nginx
+
+echo "安装完成！"
+```
